@@ -61,7 +61,6 @@ int do_proxy(int argc, char **argv)
 
     } else {
         struct pollfd pfds[2];
-        int log_in, log_out;
 
         pfds[0].fd = master;
         pfds[0].events = POLLOUT;
@@ -84,9 +83,6 @@ int do_proxy(int argc, char **argv)
             perror("tcsetattr");
             exit_status = -1;
         }
-
-        log_in = open("in.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        log_out = open("out.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
         while (1) {
             int res;
@@ -118,7 +114,6 @@ int do_proxy(int argc, char **argv)
                     res = read(master, buf, 4096);
                     if (res > 0) {
                         write(STDOUT_FILENO, buf, res);
-                        write(log_out, buf, res);
                     }
                 } while (res == 4096);
                 pfds[0].revents &= ~POLLOUT;
@@ -129,7 +124,6 @@ int do_proxy(int argc, char **argv)
                     res = read(STDIN_FILENO, buf, 4096);
                     if (res > 0) {
                         write(master, buf, res);
-                        write(log_in, buf, res);
                     }
                 } while (res == 4096);
                 pfds[1].revents &= ~POLLIN;
@@ -140,8 +134,6 @@ int do_proxy(int argc, char **argv)
             perror("tcsetattr");
             exit_status = -1;
         }
-        close(log_in);
-        close(log_out);
         close(master);
     }
     return exit_status;
